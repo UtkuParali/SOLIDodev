@@ -1,0 +1,193 @@
+Hamdi Utku PARALI
+19253510
+
+
+SOLID Tasarım Prensipleri — C#
+
+SRP — Single Responsibility Principle (Tek Sorumluluk Prensibi)
+
+Önceki hali----------
+public class JsonFormatter
+{
+    public string Format(string input)
+    {
+        // Formatlama işlemini yap
+        return "formatlanmış metin!";
+    }
+}
+
+Bu sınıfın SRP uygulanmış hali---------
+public class JsonFormatter
+{
+    private JsonValidator _validator = new JsonValidator();
+
+    public string Format(string input)
+    {
+        // Kural denetimini _validator nesnesine yaptır
+        if (!_validator.IsValid(input))
+            throw new ValidationException();
+
+        // Formatlama işlemini yap
+        return "formatlanmış metin!";
+    }
+}
+
+OCP — Open Closed Principle (Açık Kapalı Prensibi)
+
+Önceki hali-----------
+public class PrettyFormatter
+{
+    // Format tipleri
+    public enum FormatTypes
+    {
+        Json,
+        Html
+    }
+
+    // Formatlama işlemini yapacak olan nesneler
+    private JsonFormatter _jsonFormatter = new JsonFormatter();
+    private HtmlFormatter _htmlFormatter = new HtmlFormatter();
+
+    // Formatlama işlemini yapan metod
+    public string Format(FormatTypes inputType, string input)
+    {
+        switch (inputType)
+        {
+            case FormatTypes.Json:
+                return _jsonFormatter.Format(input);
+            case FormatTypes.Html:
+                return _htmlFormatter.Format(input);
+            default:
+                throw new Exception("Desteklenmeyen format tipi!");
+        }
+    }
+}
+
+
+OCP presibini uygulanmış hali-------
+public class PrettyFormatter
+{
+    // Formatlama işlemini yapan metod
+    public string Format(PrettyFormatProvider provider, string input)
+    {
+        return provider.Format(input);
+    }
+}
+
+
+LSP — Liskov Substitution Principle (Liskov Yerine Geçme Prensibi)
+
+Önceki hali-----------
+public class XmlSchemaValidator
+{
+    private string _xsdSchema;
+    public XmlSchemaValidator(string xsd)
+    {
+        _xsdSchema = xsd;
+    }
+
+    public bool IsValid(string input)
+    {
+        // XSD şemaya göre kural denetimini yap
+        return true;
+    }
+}
+
+
+LSP presibini uygulanmış hali-------
+public class XmlFormatter : PrettyFormatProvider
+{
+    private PrettyFormatValidator _validator;
+
+    public XmlFormatter(PrettyFormatValidator validator)
+    {
+        _validator = validator;
+    }
+
+    public override string Format(string input)
+    {
+
+        if (_validator.IsValid(input))
+            throw new ValidationException();
+        
+        // Formatlama işlemini yap
+        return "formatlanmış metin!";
+    }
+}
+
+ISP — Interface Segregation Principle (Arayüz Ayrımı Prensibi)
+Kullanıcılar, kullanmadıkları arayüzlere veya metodlara bağımlı olmaya zorlanmamalıdır.
+
+Önceki hali-----------
+public interface IPrettyFormatValidator
+{
+    string Schema { get; set; }
+    bool IsValid(string input);
+}
+
+ISP presibini uygulanmış hali-------
+public class XmlValidator:IPrettyFormatValidator
+{
+    public bool IsValid(string input)
+    {
+        // Kural denetimini yap
+        return true;
+    }
+}
+
+public class XmlSchemaValidator:IPrettyFormatSchemaValidator
+{
+    public string Schema { get; set; }
+
+    public bool IsValid(string input)
+    {
+        // XSD şemaya göre kural denetimini yap
+        return true;
+    }
+}
+
+DIP — Dependency Inversion Principle (Bağımlılıkların Tersine Çevrilmesi Prensibi)
+
+Önceki hali-----------
+public class PrettyFormatter
+{
+    // Format tipleri
+    public enum FormatTypes
+    {
+        Json,
+        Html
+    }
+
+    // Formatlama işlemini yapacak olan nesneler
+    private JsonFormatter _jsonFormatter = new JsonFormatter();
+    private HtmlFormatter _htmlFormatter = new HtmlFormatter();
+
+    // Formatlama işlemini yapan metod
+    public string Format(FormatTypes inputType, string input)
+    {
+        switch (inputType)
+        {
+            case FormatTypes.Json:
+                return _jsonFormatter.Format(input);
+            case FormatTypes.Html:
+                return _htmlFormatter.Format(input);
+            default:
+                throw new Exception("Desteklenmeyen format tipi!");
+        }
+    }
+}
+DIP presibini uygulanmış hali------
+public class PrettyFormatter
+{
+    private PrettyFormatProvider _provider;
+    public PrettyFormatter(PrettyFormatProvider provider)
+    {
+        _provider = provider;
+    }
+
+    // Formatlama işlemini yapan metod
+    public string Format(string input)
+    {
+        return _provider.Format(input);
+    }
+}
